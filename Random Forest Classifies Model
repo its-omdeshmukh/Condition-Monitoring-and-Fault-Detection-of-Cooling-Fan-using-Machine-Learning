@@ -1,1 +1,69 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
+# Load normal data from CSV
+normal_data = pd.read_csv(r'C:\Users\omdes\OneDrive\Desktop\BE Projct\Final Dataset\Data 1400 RPM.csv')
+
+# Load faulty data from CSV
+faulty_data = pd.read_csv(r'C:\Users\omdes\OneDrive\Desktop\BE Projct\Final Dataset\Faulty Data 1400 RPM.csv')
+
+# Split the data into features (accelerations) and labels (normal/faulty)
+normal_features = normal_data[['Normalacc1', 'Normalacc2']]
+faulty_features = faulty_data[['Faultyacc1', 'Faultyacc2']]
+
+# Create labels: 0 for normal, 1 for faulty
+normal_labels = pd.Series([0] * len(normal_features))
+faulty_labels = pd.Series([1] * len(faulty_features))
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(
+    pd.concat([normal_features, faulty_features]),  # Concatenate features
+    pd.concat([normal_labels, faulty_labels]),  # Concatenate labels
+    test_size=0.2, random_state=42
+)
+
+# Handle missing values by imputation
+imputer = SimpleImputer(strategy='mean')
+X_train_imputed = imputer.fit_transform(X_train)
+X_test_imputed = imputer.transform(X_test)
+
+# Train a Random Forest classifier
+classifier = RandomForestClassifier()
+classifier.fit(X_train_imputed, y_train)
+
+# Make predictions on the test set
+predictions = classifier.predict(X_test_imputed)
+
+# Evaluate the accuracy of the classifier
+accuracy = accuracy_score(y_test, predictions)
+print("Accuracy:", accuracy)
+
+# Additional analysis
+confusion_matrix = confusion_matrix(y_test, predictions)
+classification_report = classification_report(y_test, predictions)
+
+print("Confusion Matrix:")
+print(confusion_matrix)
+print("\nClassification Report:")
+print(classification_report)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+# Calculate confusion matrix
+confusion_matrix = confusion_matrix(y_test, predictions)
+
+# Define class labels
+class_labels = ['Normal', 'Faulty']
+
+# Plot confusion matrix as a heatmap
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix, annot=True, cmap='Blues', fmt='d', xticklabels=class_labels, yticklabels=class_labels)
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.title('Confusion Matrix')
+plt.show()
